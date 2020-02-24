@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
@@ -38,7 +39,7 @@ type User struct {
 	FirstName string
 	LastName  string
 	Email     string
-	Balance   float32
+	Balance   float64
 }
 
 type Bank struct {
@@ -47,6 +48,7 @@ type Bank struct {
 	Year      string
 	Countries []string
 	Users     []string
+	Balance   float64
 }
 
 type Transaction struct {
@@ -54,7 +56,7 @@ type Transaction struct {
 	Date       string
 	ReceiverId string
 	PayerId    string
-	Amount     float32
+	Amount     float64
 }
 
 type Loan struct {
@@ -62,11 +64,11 @@ type Loan struct {
 	UserId            string
 	ApprovalDate      string
 	RepaymentEndDate  string
-	InstallmentAmount float32
-	Interest          float32
+	InstallmentAmount float64
+	Interest          float64
 	AllInstallments   int
 	PaidInstallments  int
-	Base              float32
+	Base              float64
 }
 
 type Sequencer struct {
@@ -119,12 +121,14 @@ func (t *BankingChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	bank1 := Bank{Id: id, Name: "UniCredit", Year: "2003",
 		Countries: []string{"USA", "UK", "Germany", "France", "Italy"},
 		Users:     []string{user1.Id, user2.Id},
+		Balance:   10000,
 	}
 
 	id, _ = seq.GetId(BANK)
 	bank2 := Bank{Id: id, Name: "Raiffeisen", Year: "2000",
 		Countries: []string{"USA", "UK", "Germany", "France", "Italy"},
 		Users:     []string{user3.Id},
+		Balance:   20000,
 	}
 
 	id, _ = seq.GetId(TRANS)
@@ -288,25 +292,112 @@ func (t *BankingChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 
 	if function == "delete" {
 		return t.delete(stub, args)
-	}
-	if function == "query" {
+	} else if function == "query" {
 		return t.query(stub, args)
-	}
-	if function == "addTutorial" {
+	} else if function == "addTutorial" {
 		return t.addTutorial(stub, args)
-	}
-	if function == "addTutor" {
+	} else if function == "addTutor" {
 		return t.addTutor(stub, args)
-	}
-	if function == "addTutorToTutorial" {
+	} else if function == "addTutorToTutorial" {
 		return t.addTutorToTutorial(stub, args)
-	}
-	if function == "removeTutorFromTutorial" {
+	} else if function == "removeTutorFromTutorial" {
 		return t.removeTutorFromTutorial(stub, args)
+	} else if function == "transfer" {
+		return t.transfer(stub, args)
+	} else if function == "payInstallment" {
+		return t.payInstallment(stub, args)
+	} else if function == "takeLoan" {
+		return t.takeLoan(stub, args)
+	} else {
+		logger.Errorf("Unknown action, check the first argument, must be one of 'delete', 'query', 'transfer', 'payInstallment', 'takeLoan'. But got: %v", args[0])
+		return shim.Error(fmt.Sprintf("Unknown action, check the first argument, must be one of 'delete', 'query', or 'move'. But got: %v", args[0]))
+	}
+}
+
+func (t *BankingChaincode) transfer(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	// iznos ne moze da bude negativan
+	var receiver, payer *User
+	var err error
+
+	if len(args) != 4 {
+		return shim.Error("Incorrect number of arguments. Expecting 4 argumetns: Receiver ID, Payer ID, Amount, Use debt (y/n)")
+	}
+	receiver, err = findUser(stub, args[0])
+	if err != nil {
+		return shim.Error(err.Error())
 	}
 
-	logger.Errorf("Unknown action, check the first argument, must be one of 'delete', 'query'. But got: %v", args[0])
-	return shim.Error(fmt.Sprintf("Unknown action, check the first argument, must be one of 'delete', 'query', or 'move'. But got: %v", args[0]))
+	payer, err = findUser(stub, args[1])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	if amount, e := strconv.ParseFloat(args[2], 64); e != nil {
+		return shim.Error("Invalid amount received, could not parse amount to nubmer")
+	} else {
+		if amount <= 0 {
+			return shim.Error("Invalid amount received, amount can not be negative")
+		}
+		return createTransaction(stub, receiver, payer, amount)
+	}
+
+}
+
+func (t *BankingChaincode) payInstallment(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	// TODO vrednost uplate mora da se poklopi sa ratom + kamata
+	return shim.Success(nil)
+}
+
+func (t *BankingChaincode) takeLoan(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	return shim.Success(nil)
+}
+
+func createTransaction(stub shim.ChaincodeStubInterface, receiver, payer *User, amount float64) pb.Response {
+	id, _ := seq.GetId(TRANS)
+	trans := Transaction{Id: id, Date: time.Now().Format("02.01.2006. 15:04:05"), ReceiverId: receiver.Id,
+		PayerId: payer.Id, Amount: amount}
+
+	receiver.Balance += amount
+	payer.Balance -= amount
+
+	receiverJson, _ := json.Marshal(receiver)
+	payerJson, _ := json.Marshal(payer)
+	transJson, _ := json.Marshal(trans)
+
+	err := stub.PutState(receiver.Id, receiverJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	err = stub.PutState(payer.Id, payerJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	err = stub.PutState(trans.Id, transJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	return shim.Success(nil)
+}
+
+func findUser(stub shim.ChaincodeStubInterface, userId string) (*User, error) {
+	var user User
+	userJson, err := stub.GetState(userId)
+	if err != nil {
+		jsonResp := "{\"Error\":\"Failed to get state for " + userId + "\"}"
+		return nil, errors.New(jsonResp)
+	}
+
+	if userJson == nil || len(userJson) == 0 {
+		jsonResp := "{\"Error\":\" " + userId + " does not exit " + "\"}"
+		return nil, errors.New(jsonResp)
+	}
+	err = json.Unmarshal(userJson, &user)
+	if err != nil {
+		return nil, errors.New("Failed to crate user from json")
+	}
+	return &user, nil
 }
 
 func (t *BankingChaincode) addTutor(stub shim.ChaincodeStubInterface, args []string) pb.Response {
