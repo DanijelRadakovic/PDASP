@@ -1,33 +1,23 @@
-/*
-Copyright IBM Corp. 2016 All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-		 http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
-
-	// "strconv"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 )
 
 var logger = shim.NewLogger("example_cc0")
+
+const (
+	USER  = "USER"
+	BANK  = "BANK"
+	TRANS = "TRANS"
+	LOAN  = "LOAN"
+)
 
 type tutor struct {
 	Id      string
@@ -41,16 +31,129 @@ type tutorial struct {
 	Tutors []string
 }
 
+type User struct {
+	Id        string
+	Username  string
+	Account   string
+	FirstName string
+	LastName  string
+	Email     string
+	Balance   float32
+}
+
+type Bank struct {
+	Id        string
+	Name      string
+	Year      string
+	Countries []string
+	Users     []string
+}
+
+type Transaction struct {
+	Id         string
+	Date       string
+	ReceiverId string
+	PayerId    string
+	Amount     float32
+}
+
+type Loan struct {
+	Id                string
+	UserId            string
+	ApprovalDate      string
+	RepaymentEndDate  string
+	InstallmentAmount float32
+	Interest          float32
+	AllInstallments   int
+	PaidInstallments  int
+	Base              float32
+}
+
+type Sequencer struct {
+	UserId  int
+	BankId  int
+	TransId int
+	LoanId  int
+}
+
+func (s *Sequencer) GetId(t string) (string, error) {
+	if t == BANK {
+		s.BankId++
+		return "bk" + strconv.Itoa(s.BankId), nil
+	} else if t == USER {
+		s.UserId++
+		return "ur" + strconv.Itoa(s.UserId), nil
+	} else if t == TRANS {
+		s.TransId++
+		return "tr" + strconv.Itoa(s.TransId), nil
+	} else if t == LOAN {
+		s.LoanId++
+		return "ln" + strconv.Itoa(s.LoanId), nil
+	} else {
+		return "", errors.New("sequencer received wrong type")
+	}
+}
+
+var seq = Sequencer{}
+
 // Global variables for ID
 var tutorId int
 var tutorialId int
 
-// SimpleChaincode example simple Chaincode implementation
-type SimpleChaincode struct {
+type BankingChaincode struct {
 }
 
-func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
-	logger.Info("########### example_cc0 Init ###########")
+func (t *BankingChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
+	logger.Info("########### Init ###########")
+
+	id, _ := seq.GetId(USER)
+	user1 := User{Id: id, Username: "peter", Account: "170-359-12", FirstName: "Peter", LastName: "Anderson", Email: "peter@gmail.com", Balance: 2000}
+
+	id, _ = seq.GetId(USER)
+	user2 := User{Id: id, Username: "nicole", Account: "170-753-26", FirstName: "Nicole", LastName: "Taylor", Email: "nicole@gmail.com", Balance: 1000}
+
+	id, _ = seq.GetId(USER)
+	user3 := User{Id: id, Username: "john", Account: "257-965-42", FirstName: "John", LastName: "Jordyson", Email: "john@gmail.com", Balance: 3000}
+
+	id, _ = seq.GetId(BANK)
+	bank1 := Bank{Id: id, Name: "UniCredit", Year: "2003",
+		Countries: []string{"USA", "UK", "Germany", "France", "Italy"},
+		Users:     []string{user1.Id, user2.Id},
+	}
+
+	id, _ = seq.GetId(BANK)
+	bank2 := Bank{Id: id, Name: "Raiffeisen", Year: "2000",
+		Countries: []string{"USA", "UK", "Germany", "France", "Italy"},
+		Users:     []string{user3.Id},
+	}
+
+	id, _ = seq.GetId(TRANS)
+	trans1 := Transaction{Id: id, Date: "24.02.2020. 19:00:00", ReceiverId: "ur1", PayerId: "ur2", Amount: 100}
+
+	id, _ = seq.GetId(TRANS)
+	trans2 := Transaction{Id: id, Date: "24.02.2020. 19:05:00", ReceiverId: "ur2", PayerId: "ur3", Amount: 200}
+
+	id, _ = seq.GetId(TRANS)
+	trans3 := Transaction{Id: id, Date: "24.02.2020. 19:10:00", ReceiverId: "ur3", PayerId: "ur2", Amount: 300}
+
+	id, _ = seq.GetId(TRANS)
+	trans4 := Transaction{Id: id, Date: "24.02.2020. 19:15:00", ReceiverId: "ur3", PayerId: "ur1", Amount: 400}
+
+	id, _ = seq.GetId(LOAN)
+	loan1 := Loan{Id: id, UserId: "ur1", ApprovalDate: "24.02.2020.", RepaymentEndDate: "24.02.2021.",
+		InstallmentAmount: 200, Interest: 2, AllInstallments: 12, PaidInstallments: 4, Base: 2400}
+
+	id, _ = seq.GetId(LOAN)
+	loan2 := Loan{Id: id, UserId: "ur3", ApprovalDate: "25.02.2020.", RepaymentEndDate: "25.02.2021.",
+		InstallmentAmount: 100, Interest: 3, AllInstallments: 12, PaidInstallments: 2, Base: 1200}
+
+	id, _ = seq.GetId(LOAN)
+	loan3 := Loan{Id: id, UserId: "ur2", ApprovalDate: "25.02.2020.", RepaymentEndDate: "25.02.2021.",
+		InstallmentAmount: 300, Interest: 1, AllInstallments: 6, PaidInstallments: 1, Base: 1800}
+
+	id, _ = seq.GetId(LOAN)
+	loan4 := Loan{Id: id, UserId: "ur3", ApprovalDate: "26.02.2020.", RepaymentEndDate: "26.02.2021.",
+		InstallmentAmount: 200, Interest: 3, AllInstallments: 24, PaidInstallments: 3, Base: 4800}
 
 	var tutor1 = tutor{"tu1", "John", "Doe"}
 	var tutor2 = tutor{"tu2", "Michel", "Green"}
@@ -69,30 +172,108 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	tutorialId = 3
 
 	// Write the state to the ledger
-	ajson, _ := json.Marshal(tutor1)
-	err := stub.PutState("tu1", ajson)
+	assetJson, _ := json.Marshal(tutor1)
+	err := stub.PutState("tu1", assetJson)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
-	ajson, _ = json.Marshal(tutor2)
-	err = stub.PutState("tu2", ajson)
+	assetJson, _ = json.Marshal(tutor2)
+	err = stub.PutState("tu2", assetJson)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
-	ajson, _ = json.Marshal(tutor3)
-	err = stub.PutState("tu3", ajson)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-
-	ajson, _ = json.Marshal(tutorial1)
-	err = stub.PutState("t1", ajson)
+	assetJson, _ = json.Marshal(tutor3)
+	err = stub.PutState("tu3", assetJson)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	ajson, _ = json.Marshal(tutorial2)
-	err = stub.PutState("t2", ajson)
+	assetJson, _ = json.Marshal(tutorial1)
+	err = stub.PutState("t1", assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(tutorial2)
+	err = stub.PutState("t2", assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(user1)
+	err = stub.PutState(user1.Id, assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(user2)
+	err = stub.PutState(user2.Id, assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(user3)
+	err = stub.PutState(user3.Id, assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(bank1)
+	err = stub.PutState(bank1.Id, assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(bank2)
+	err = stub.PutState(bank2.Id, assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(trans1)
+	err = stub.PutState(trans1.Id, assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(trans2)
+	err = stub.PutState(trans2.Id, assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(trans3)
+	err = stub.PutState(trans3.Id, assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(trans4)
+	err = stub.PutState(trans4.Id, assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(loan1)
+	err = stub.PutState(loan1.Id, assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(loan2)
+	err = stub.PutState(loan2.Id, assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(loan3)
+	err = stub.PutState(loan3.Id, assetJson)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	assetJson, _ = json.Marshal(loan4)
+	err = stub.PutState(loan4.Id, assetJson)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -100,9 +281,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	return shim.Success(nil)
 }
 
-// Transaction makes payment of X units from A to B
-func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
-	logger.Info("########### example_cc0 Invoke ###########")
+func (t *BankingChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
+	logger.Info("########### Invoke ###########")
 
 	function, args := stub.GetFunctionAndParameters()
 
@@ -129,7 +309,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	return shim.Error(fmt.Sprintf("Unknown action, check the first argument, must be one of 'delete', 'query', or 'move'. But got: %v", args[0]))
 }
 
-func (t *SimpleChaincode) addTutor(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *BankingChaincode) addTutor(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	var name, surname string // Entities
 
 	if len(args) < 1 {
@@ -152,7 +332,7 @@ func (t *SimpleChaincode) addTutor(stub shim.ChaincodeStubInterface, args []stri
 	return shim.Success(nil)
 }
 
-func (t *SimpleChaincode) addTutorial(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *BankingChaincode) addTutorial(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	// TODO implement function
 	// arg 0 - name, arg1,arg2,arg3,arg4... - tutorID (which is the same as tutorKey)
 	// Check number of arguments
@@ -196,7 +376,7 @@ func (t *SimpleChaincode) addTutorial(stub shim.ChaincodeStubInterface, args []s
 	return shim.Success(nil)
 }
 
-func (t *SimpleChaincode) addTutorToTutorial(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *BankingChaincode) addTutorToTutorial(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	// TODO implement function
 	// arg0 - tutrorialId (which is the same as tutorialKey), arg1 - tutorId
 	// Check number of arguments
@@ -260,7 +440,7 @@ func (t *SimpleChaincode) addTutorToTutorial(stub shim.ChaincodeStubInterface, a
 	return shim.Success(nil)
 }
 
-func (t *SimpleChaincode) removeTutorFromTutorial(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *BankingChaincode) removeTutorFromTutorial(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	// TODO implement function
 	// arg0 - tutrorialId, arg1 - tutorId
 	// Check number of arguments
@@ -326,7 +506,7 @@ func (t *SimpleChaincode) removeTutorFromTutorial(stub shim.ChaincodeStubInterfa
 }
 
 // Deletes an entity from state
-func (t *SimpleChaincode) delete(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *BankingChaincode) delete(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
@@ -343,7 +523,7 @@ func (t *SimpleChaincode) delete(stub shim.ChaincodeStubInterface, args []string
 }
 
 // Query callback representing the query of a chaincode
-func (t *SimpleChaincode) query(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *BankingChaincode) query(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 
 	var A string // Entities
 	var err error
@@ -372,8 +552,8 @@ func (t *SimpleChaincode) query(stub shim.ChaincodeStubInterface, args []string)
 }
 
 func main() {
-	err := shim.Start(new(SimpleChaincode))
+	err := shim.Start(new(BankingChaincode))
 	if err != nil {
-		logger.Errorf("Error starting Simple chaincode: %s", err)
+		logger.Errorf("Error starting Banking chaincode: %s", err)
 	}
 }
