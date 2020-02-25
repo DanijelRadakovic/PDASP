@@ -11,7 +11,7 @@ import (
 	pb "github.com/hyperledger/fabric/protos/peer"
 )
 
-var logger = shim.NewLogger("example_cc0")
+var logger = shim.NewLogger("Banking")
 
 const (
 	USER  = "USER"
@@ -34,7 +34,6 @@ type tutorial struct {
 
 type User struct {
 	Id           string
-	Username     string
 	Account      string
 	FirstName    string
 	LastName     string
@@ -110,15 +109,15 @@ func (t *BankingChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	logger.Info("########### Init ###########")
 
 	id, _ := seq.GetId(USER)
-	user1 := User{Id: id, Username: "peter", Account: "170-359-12", FirstName: "Peter", LastName: "Anderson",
+	user1 := User{Id: id, Account: "170-359-12", FirstName: "Peter", LastName: "Anderson",
 		Email: "peter@gmail.com", Balance: 2000, Transactions: make([]string, 0, 50)}
 
 	id, _ = seq.GetId(USER)
-	user2 := User{Id: id, Username: "nicole", Account: "170-753-26", FirstName: "Nicole", LastName: "Taylor",
+	user2 := User{Id: id, Account: "170-753-26", FirstName: "Nicole", LastName: "Taylor",
 		Email: "nicole@gmail.com", Balance: 1000, Transactions: make([]string, 0, 50)}
 
 	id, _ = seq.GetId(USER)
-	user3 := User{Id: id, Username: "john", Account: "257-965-42", FirstName: "John", LastName: "Jordyson",
+	user3 := User{Id: id, Account: "257-965-42", FirstName: "John", LastName: "Jordyson",
 		Email: "john@gmail.com", Balance: 3000, Transactions: make([]string, 0, 50)}
 
 	id, _ = seq.GetId(BANK)
@@ -318,22 +317,28 @@ func (t *BankingChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 		return t.transfer(stub, args)
 	} else if function == "payInstallment" {
 		return t.payInstallment(stub, args)
-	} else if function == "takeLoan" {
-		return t.takeLoan(stub, args)
+	} else if function == "createBank" {
+		return t.createBank(stub, args)
+	}  else if function == "createUser" {
+		return t.createUser(stub, args)
+	} else if function == "createLoan" {
+		return t.createLoan(stub, args)
 	} else {
-		logger.Errorf("Unknown action, check the first argument, must be one of 'delete', 'query', 'transfer', 'payInstallment', 'takeLoan'. But got: %v", args[0])
-		return shim.Error(fmt.Sprintf("Unknown action, check the first argument, must be one of 'delete', 'query', or 'move'. But got: %v", args[0]))
+		logger.Errorf("Unknown action, check the first argument, must be one of 'delete', 'query', 'transfer', " +
+			"'payInstallment', 'createLoan', 'createBank', 'createUser'. But got: %v", args[0])
+		return shim.Error(fmt.Sprintf("Unknown action, check the first argument, must be one of 'delete', 'query', 'transfer', " +
+			"'payInstallment', 'createLoan', 'createBank', 'createUser'. But got: %v", args[0]))
 	}
 }
 
 func (t *BankingChaincode) transfer(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	// iznos ne moze da bude negativan
 	var receiver, payer *User
 	var useDebt string
 	var err error
 
 	if len(args) != 4 {
-		return shim.Error("Incorrect number of arguments. Expecting 4 argumetns: Receiver ID, Payer ID, Amount, Use debt (y/n)")
+		return shim.Error("Incorrect number of arguments. Expecting 4 arguments: " +
+			"Receiver ID, Payer ID, Amount, Use debt (y/n)")
 	}
 
 	if args[3] != "y" && args[3] != "n" {
@@ -353,10 +358,10 @@ func (t *BankingChaincode) transfer(stub shim.ChaincodeStubInterface, args []str
 	}
 
 	if amount, e := strconv.ParseFloat(args[2], 64); e != nil {
-		return shim.Error("Invalid amount received, could not parse amount to nubmer")
+		return shim.Error(fmt.Sprintf("Invalid year received, could not parse %v", args[1]))
 	} else {
 		if amount <= 0 {
-			return shim.Error("Invalid amount received, amount can not be negative")
+			return shim.Error("Invalid amount received, amount can not be zero or negative")
 		}
 		if useDebt == "n" {
 			if amount > payer.Balance {
@@ -385,7 +390,45 @@ func (t *BankingChaincode) payInstallment(stub shim.ChaincodeStubInterface, args
 	return shim.Success(nil)
 }
 
-func (t *BankingChaincode) takeLoan(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *BankingChaincode) createLoan(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	return shim.Success(nil)
+}
+
+func (t *BankingChaincode) createBank(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	var bank Bank
+
+	if len(args) < 3  {
+		return shim.Error("Incorrect number of arguments. Expecting at least 3 arguments: " +
+			"Name, Year, Balance, [Countries]")
+	}
+
+	if _, err := time.Parse("2006", args[1]); err != nil {
+		return shim.Error(fmt.Sprintf("Invalid year received, could not parse %v", args[1]))
+	}
+
+	if amount, e := strconv.ParseFloat(args[2], 64); e != nil {
+		return shim.Error(fmt.Sprintf("Invalid balance received, could not parse %v", args[2]))
+	} else {
+		if amount < 0 {
+			return shim.Error("Invalid balance received, balance can not be negative")
+		}
+		id, _ := seq.GetId(BANK)
+		if len(args) > 3 {
+			bank = Bank{Id: id, Name: args[0], Year: args[1], Balance: amount, Users: []string{}, Countries: args[3:]}
+		} else {
+			bank = Bank{Id: id, Name: args[0], Year: args[1], Balance: amount, Countries: []string{}, Users: []string{}}
+		}
+
+		bankJson, _ := json.Marshal(bank)
+		err := stub.PutState(bank.Id, bankJson)
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+	}
+	return shim.Success(nil)
+}
+
+func (t *BankingChaincode) createUser(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	return shim.Success(nil)
 }
 
