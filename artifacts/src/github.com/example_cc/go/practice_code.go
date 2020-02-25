@@ -33,13 +33,14 @@ type tutorial struct {
 }
 
 type User struct {
-	Id        string
-	Username  string
-	Account   string
-	FirstName string
-	LastName  string
-	Email     string
-	Balance   float64
+	Id           string
+	Username     string
+	Account      string
+	FirstName    string
+	LastName     string
+	Email        string
+	Balance      float64
+	Transactions []string
 }
 
 type Bank struct {
@@ -109,13 +110,16 @@ func (t *BankingChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	logger.Info("########### Init ###########")
 
 	id, _ := seq.GetId(USER)
-	user1 := User{Id: id, Username: "peter", Account: "170-359-12", FirstName: "Peter", LastName: "Anderson", Email: "peter@gmail.com", Balance: 2000}
+	user1 := User{Id: id, Username: "peter", Account: "170-359-12", FirstName: "Peter", LastName: "Anderson",
+		Email: "peter@gmail.com", Balance: 2000, Transactions: make([]string, 0, 50)}
 
 	id, _ = seq.GetId(USER)
-	user2 := User{Id: id, Username: "nicole", Account: "170-753-26", FirstName: "Nicole", LastName: "Taylor", Email: "nicole@gmail.com", Balance: 1000}
+	user2 := User{Id: id, Username: "nicole", Account: "170-753-26", FirstName: "Nicole", LastName: "Taylor",
+		Email: "nicole@gmail.com", Balance: 1000, Transactions: make([]string, 0, 50)}
 
 	id, _ = seq.GetId(USER)
-	user3 := User{Id: id, Username: "john", Account: "257-965-42", FirstName: "John", LastName: "Jordyson", Email: "john@gmail.com", Balance: 3000}
+	user3 := User{Id: id, Username: "john", Account: "257-965-42", FirstName: "John", LastName: "Jordyson",
+		Email: "john@gmail.com", Balance: 3000, Transactions: make([]string, 0, 50)}
 
 	id, _ = seq.GetId(BANK)
 	bank1 := Bank{Id: id, Name: "UniCredit", Year: "2003",
@@ -133,15 +137,23 @@ func (t *BankingChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 
 	id, _ = seq.GetId(TRANS)
 	trans1 := Transaction{Id: id, Date: "24.02.2020. 19:00:00", ReceiverId: "ur1", PayerId: "ur2", Amount: 100}
+	user1.Transactions = append(user1.Transactions, id)
+	user2.Transactions = append(user2.Transactions, id)
 
 	id, _ = seq.GetId(TRANS)
 	trans2 := Transaction{Id: id, Date: "24.02.2020. 19:05:00", ReceiverId: "ur2", PayerId: "ur3", Amount: 200}
+	user2.Transactions = append(user2.Transactions, id)
+	user3.Transactions = append(user3.Transactions, id)
 
 	id, _ = seq.GetId(TRANS)
 	trans3 := Transaction{Id: id, Date: "24.02.2020. 19:10:00", ReceiverId: "ur3", PayerId: "ur2", Amount: 300}
+	user2.Transactions = append(user2.Transactions, id)
+	user3.Transactions = append(user3.Transactions, id)
 
 	id, _ = seq.GetId(TRANS)
 	trans4 := Transaction{Id: id, Date: "24.02.2020. 19:15:00", ReceiverId: "ur3", PayerId: "ur1", Amount: 400}
+	user1.Transactions = append(user1.Transactions, id)
+	user3.Transactions = append(user3.Transactions, id)
 
 	id, _ = seq.GetId(LOAN)
 	loan1 := Loan{Id: id, UserId: "ur1", ApprovalDate: "24.02.2020.", RepaymentEndDate: "24.02.2021.",
@@ -317,11 +329,19 @@ func (t *BankingChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response 
 func (t *BankingChaincode) transfer(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	// iznos ne moze da bude negativan
 	var receiver, payer *User
+	var useDebt string
 	var err error
 
 	if len(args) != 4 {
 		return shim.Error("Incorrect number of arguments. Expecting 4 argumetns: Receiver ID, Payer ID, Amount, Use debt (y/n)")
 	}
+
+	if args[3] != "y" && args[3] != "n" {
+		return shim.Error("Incorrect value for use debt receive. Allowed values are y or n")
+	}
+
+	useDebt = args[3]
+
 	receiver, err = findUser(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
@@ -338,7 +358,24 @@ func (t *BankingChaincode) transfer(stub shim.ChaincodeStubInterface, args []str
 		if amount <= 0 {
 			return shim.Error("Invalid amount received, amount can not be negative")
 		}
-		return createTransaction(stub, receiver, payer, amount)
+		if useDebt == "n" {
+			if amount > payer.Balance {
+				return shim.Error("Not enough money on account")
+			} else {
+				return createTransaction(stub, receiver, payer, amount)
+			}
+		} else {
+			var avgIncome float64
+			avgIncome, err = averageIncome(stub, payer)
+			if err != nil {
+				return shim.Error(err.Error())
+			} else if avgIncome+payer.Balance < amount {
+				return shim.Error("Not enough money on account and can not use debt")
+			} else {
+				return createTransaction(stub, receiver, payer, amount)
+			}
+		}
+
 	}
 
 }
@@ -359,6 +396,8 @@ func createTransaction(stub shim.ChaincodeStubInterface, receiver, payer *User, 
 
 	receiver.Balance += amount
 	payer.Balance -= amount
+	receiver.Transactions = append(receiver.Transactions, id)
+	payer.Transactions = append(payer.Transactions, id)
 
 	receiverJson, _ := json.Marshal(receiver)
 	payerJson, _ := json.Marshal(payer)
@@ -398,6 +437,36 @@ func findUser(stub shim.ChaincodeStubInterface, userId string) (*User, error) {
 		return nil, errors.New("Failed to crate user from json")
 	}
 	return &user, nil
+}
+
+func averageIncome(stub shim.ChaincodeStubInterface, user *User) (float64, error) {
+	var trans Transaction
+	amount := 0.0
+	cnt := 0
+
+	for _, transId := range user.Transactions {
+		transJson, err := stub.GetState(transId)
+		if err != nil {
+			jsonResp := "{\"Error\":\"Failed to get state for " + transId + "\"}"
+			return -1, errors.New(jsonResp)
+		}
+
+		if transJson == nil || len(transJson) == 0 {
+			jsonResp := "{\"Error\":\" " + transId + " does not exit " + "\"}"
+			return -1, errors.New(jsonResp)
+		}
+
+		err = json.Unmarshal(transJson, &trans)
+		if err != nil {
+			return -1, errors.New("Failed to crate transaction from json")
+		}
+
+		if trans.ReceiverId == user.Id {
+			amount += trans.Amount
+			cnt++
+		}
+	}
+	return amount / float64(cnt), nil
 }
 
 func (t *BankingChaincode) addTutor(stub shim.ChaincodeStubInterface, args []string) pb.Response {

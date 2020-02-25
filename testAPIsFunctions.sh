@@ -183,6 +183,72 @@ echo
 echo "====================================================================================="
 
 
+echo "POST invoke chaincode on peers of Org1 and Org2 (Unsuccessful transfer 3500 from ur3 to ur2 using debt)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"transfer\",
+  \"args\":[\"ur2\",\"ur3\",\"3500\",\"y\"]
+}")
+echo $VALUES
+# Assign previous invoke transaction id  to TRX_ID
+MESSAGE=$(echo $VALUES | jq -r ".message")
+TRX_ID=${MESSAGE#*ID: }
+echo
+
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (transfer 3250 from ur3 to ur2 using debt)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"transfer\",
+  \"args\":[\"ur2\",\"ur3\",\"3250\",\"y\"]
+}")
+echo $VALUES
+# Assign previous invoke transaction id  to TRX_ID
+MESSAGE=$(echo $VALUES | jq -r ".message")
+TRX_ID=${MESSAGE#*ID: }
+echo
+
+
+echo "GET query chaincode on peer1 of Org1 (Get user ur2)"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22ur2%22%5D" \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo "====================================================================================="
+
+
+echo "GET query chaincode on peer1 of Org1 (Get user ur2)"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22ur3%22%5D" \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo "====================================================================================="
+
+
+echo "GET query chaincode on peer1 of Org1 (Get transaction tr6)"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22tr6%22%5D" \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo "====================================================================================="
+
+
 # echo "GET query chaincode on peer1 of Org1"
 # echo
 # curl -s -X GET \
