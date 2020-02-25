@@ -120,3 +120,275 @@ VALUES=$(curl -s -X POST \
 }")
 echo "$VALUES"
 echo
+
+
+######################## TRY TO TRANSFER MONEY WITH NOT ENOUGH ARGUMENTS ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Transfer 500 from ur2 to ur1)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"transfer\",
+  \"args\":[\"ur1\",\"ur2\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO TRANSFER MONEY WITH ZERO AMOUNT ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Transfer 0 from ur2 to ur1)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"transfer\",
+  \"args\":[\"ur1\",\"ur2\",\"0\",\"n\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO TRANSFER MONEY WITH NEGATIVE AMOUNT ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Transfer -500 from ur2 to ur1)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"transfer\",
+  \"args\":[\"ur1\",\"ur2\",\"-500\",\"n\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO TRANSFER MONEY WITH INVALID AMOUNT ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Transfer ttt from ur2 to ur1)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"transfer\",
+  \"args\":[\"ur1\",\"ur2\",\"ttt\",\"n\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE LOAN WITH INVALID DATE FORMAT ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Create new bank)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createLoan\",
+  \"args\":[\"ur5\",\"25.02.2020\",\"25.02.2021\",\"0.02\",\"12\",\"1000\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW LOAN WITH ZERO NUMBER OF INTALLMENTS ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Create new loan for ur1 that already has loan)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createLoan\",
+  \"args\":[\"ur1\",\"25.02.2020.\",\"25.02.2021.\",\"0.5\",\"0\",\"1000\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW LOAN WITH NEGATIVE NUBMER OF INTALLMENTS ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Create new loan for ur1 that already has loan)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createLoan\",
+  \"args\":[\"ur1\",\"25.02.2020.\",\"25.02.2021.\",\"0.5\",\"-1\",\"1000\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW LOAN WITH INVALID NUMBER OF INTALLMENTS ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Create new loan for ur1 that already has loan)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createLoan\",
+  \"args\":[\"ur1\",\"25.02.2020.\",\"25.02.2021.\",\"0.5\",\"t\",\"1000\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW LOAN WITH ZERO BASE ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Create new loan for ur1 that already has loan)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createLoan\",
+  \"args\":[\"ur1\",\"25.02.2020.\",\"25.02.2021.\",\"0.5\",\"1\",\"0\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW LOAN WITH NEGATIVE BASE ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Create new loan for ur1 that already has loan)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createLoan\",
+  \"args\":[\"ur1\",\"25.02.2020.\",\"25.02.2021.\",\"0.5\",\"1\",\"-1000\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW LOAN WITH INVALID BASE ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Create new loan for ur1 that already has loan)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createLoan\",
+  \"args\":[\"ur1\",\"25.02.2020.\",\"25.02.2021.\",\"0.5\",\"1\",\"t\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW LOAN WITH ZERO INTEREST RATE ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Create new loan for ur1 that already has loan)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createLoan\",
+  \"args\":[\"ur1\",\"25.02.2020.\",\"25.02.2021.\",\"0\",\"1\",\"1000\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW LOAN WITH NEGATIVE INTEREST RATE ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Create new loan for ur1 that already has loan)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createLoan\",
+  \"args\":[\"ur1\",\"25.02.2020.\",\"25.02.2021.\",\"-0.5\",\"1\",\"1000\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW LOAN WITH INVALID INTEREST RATE ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Create new loan for ur1 that already has loan)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createLoan\",
+  \"args\":[\"ur1\",\"25.02.2020.\",\"25.02.2021.\",\"t\",\"1\",\"1000\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW LOAN WITH REPAYMENT END DAY IS BEFORE APPROVAL DATE ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Create new loan for ur1 that already has loan)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createLoan\",
+  \"args\":[\"ur1\",\"25.02.2021.\",\"25.02.2020.\",\"0.5\",\"1\",\"1000\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW LOAN WITH NOT ENOUGH ARGUMENTS ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (Create new loan for ur1 that already has loan)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createLoan\",
+  \"args\":[\"ur1\",\"25.02.2021.\",\"25.02.2020.\",\"0.5\",\"1\"]
+}")
+echo "$VALUES"
+echo
