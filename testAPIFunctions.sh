@@ -392,3 +392,71 @@ VALUES=$(curl -s -X POST \
 }")
 echo "$VALUES"
 echo
+
+
+######################## UNSUCCESSFUL INSTALLMENT PAYMENT OF USER5 BECAUSE NO LOAN IS FOUND  ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (us5 pays installment of no loan)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"payInstallment\",
+  \"args\":[\"ur5\",\"1500\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW USER WITH INVALID BANK  ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (create new  user)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createUser\",
+  \"args\":[\"Jack\",\"Stallman\",\"jack@gmail.com\",\"br7\",\"7000\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW USER WITH NEGATIVE BALANCE  ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (create new  user)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createUser\",
+  \"args\":[\"Jack\",\"Stallman\",\"jack@gmail.com\",\"bk1\",\"-1000\"]
+}")
+echo "$VALUES"
+echo
+
+
+######################## TRY TO CREATE NEW USER WITH ZERO BALANCE  ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (create new  user)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createUser\",
+  \"args\":[\"Jack\",\"Stallman\",\"jack@gmail.com\",\"bk1\",\"0\"]
+}")
+echo "$VALUES"
+echo

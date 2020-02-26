@@ -346,245 +346,166 @@ echo
 echo "====================================================================================="
 
 
-# echo "POST invoke chaincode on peers of Org1 and Org2 (Add new tutorial)"
-# echo
-# VALUES=$(curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/chaincodes/mycc \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d "{
-#   \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
-#   \"fcn\":\"addTutorial\",
-#   \"args\":[\"Hadoop tutorial\",\"tu1\",\"tu4\"]
-# }")
-# echo $VALUES
-# # Assign previous invoke transaction id  to TRX_ID
-# MESSAGE=$(echo $VALUES | jq -r ".message")
-# TRX_ID=${MESSAGE#*ID: }
-# echo
+######################## USER1 PAYS INTALLMENT ########################
 
-# echo "GET query chaincode on peer1 of Org1"
-# echo
-# curl -s -X GET \
-#   "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22t3%22%5D" \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json"
-# echo
-
-# echo "====================================================================================="
+echo "POST invoke chaincode on peers of Org1 and Org2 (us1 pays installment amount 220)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"payInstallment\",
+  \"args\":[\"ur1\",\"220\"]
+}")
+echo "$VALUES"
+echo
 
 
+echo "GET query chaincode on peer1 of Org1 (Get user ur1)"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22ur1%22%5D" \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo "====================================================================================="
 
 
+echo "GET query chaincode on peer1 of Org1 (Get bank bk1)"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22bk1%22%5D" \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo "====================================================================================="
 
 
-# echo "POST invoke chaincode on peers of Org1 and Org2 (Add new tutor to existing tutorial)"
-# echo
-# VALUES=$(curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/chaincodes/mycc \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d "{
-#   \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
-#   \"fcn\":\"addTutorToTutorial\",
-#   \"args\":[\"t1\",\"tu4\"]
-# }")
-# echo $VALUES
-# # Assign previous invoke transaction id  to TRX_ID
-# MESSAGE=$(echo $VALUES | jq -r ".message")
-# TRX_ID=${MESSAGE#*ID: }
-# echo
+echo "GET query chaincode on peer1 of Org1 (Get transacion tr13)"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22tr13%22%5D" \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo "====================================================================================="
 
 
-# echo "GET query chaincode on peer1 of Org1"
-# echo
-# curl -s -X GET \
-#   "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22t1%22%5D" \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json"
-# echo
-# echo "====================================================================================="
+######################## UNSUCCESSFUL INSTALLMENT PAYMENT OF USER1 BECAUSE AMOUNT IS NOT CORRECT  ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (us1 pays installment amount 300)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"payInstallment\",
+  \"args\":[\"ur1\",\"300\"]
+}")
+echo "$VALUES"
+echo
 
 
+######################## USER5 PAYS LAST INTALLMENT ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (us5 pays last installment amount 1500)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"payInstallment\",
+  \"args\":[\"ur5\",\"1500\"]
+}")
+echo "$VALUES"
+echo
 
 
-
-# echo "POST invoke chaincode on peers of Org1 and Org2 (Add new tutor to existing tutorial - error)"
-# echo
-# VALUES=$(curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/chaincodes/mycc \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d "{
-#   \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
-#   \"fcn\":\"addTutorToTutorial\",
-#   \"args\":[\"t1\",\"tu10\"]
-# }")
-# echo $VALUES
-# # Assign previous invoke transaction id  to TRX_ID
-# MESSAGE=$(echo $VALUES | jq -r ".message")
-# TRX_ID=${MESSAGE#*ID: }
-# echo
+echo "GET query chaincode on peer1 of Org1 (Get user ur5)"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22ur5%22%5D" \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo "====================================================================================="
 
 
-# echo "GET query chaincode on peer1 of Org1"
-# echo
-# curl -s -X GET \
-#   "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22t1%22%5D" \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json"
-# echo
-# echo "====================================================================================="
+echo "GET query chaincode on peer1 of Org1 (Get bank bk2)"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22bk2%22%5D" \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo "====================================================================================="
 
 
+echo "GET query chaincode on peer1 of Org1 (Get transacion tr14)"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22tr14%22%5D" \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo "====================================================================================="
 
 
-# echo "POST invoke chaincode on peers of Org1 and Org2 (Add new tutor to existing tutorial - error)"
-# echo
-# VALUES=$(curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/chaincodes/mycc \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d "{
-#   \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
-#   \"fcn\":\"addTutorToTutorial\",
-#   \"args\":[\"t1\",\"tu2\"]
-# }")
-# echo $VALUES
-# # Assign previous invoke transaction id  to TRX_ID
-# MESSAGE=$(echo $VALUES | jq -r ".message")
-# TRX_ID=${MESSAGE#*ID: }
-# echo
+######################## UNSUCCESSFUL INSTALLMENT PAYMENT OF USER5 BECAUSE NO LOAN IS FOUND  ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (us5 pays installment of no loan)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"payInstallment\",
+  \"args\":[\"ur5\",\"1500\"]
+}")
+echo "$VALUES"
+echo
 
 
-# echo "GET query chaincode on peer1 of Org1"
-# echo
-# curl -s -X GET \
-#   "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22t1%22%5D" \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json"
-# echo
-# echo "====================================================================================="
+######################## CREATE NEW USER  ########################
+
+echo "POST invoke chaincode on peers of Org1 and Org2 (create new  user)"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"createUser\",
+  \"args\":[\"Jack\",\"Stallman\",\"jack@gmail.com\",\"bk1\",\"7000\"]
+}")
+echo "$VALUES"
+echo
 
 
+echo "GET query chaincode on peer1 of Org1 (Get user ur6)"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22ur6%22%5D" \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo "====================================================================================="
 
 
-# echo "POST invoke chaincode on peers of Org1 and Org2 (Remov tutor from tutorial)"
-# echo
-# VALUES=$(curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/chaincodes/mycc \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d "{
-#   \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
-#   \"fcn\":\"removeTutorFromTutorial\",
-#   \"args\":[\"t1\",\"tu4\"]
-# }")
-# echo $VALUES
-# # Assign previous invoke transaction id  to TRX_ID
-# MESSAGE=$(echo $VALUES | jq -r ".message")
-# TRX_ID=${MESSAGE#*ID: }
-# echo
-
-
-# echo "GET query chaincode on peer1 of Org1"
-# echo
-# curl -s -X GET \
-#   "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22t1%22%5D" \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json"
-# echo
-# echo "====================================================================================="
-
-
-
-
-
-# echo "POST invoke chaincode on peers of Org1 and Org2 (Remov tutor from tutorial - error)"
-# echo
-# VALUES=$(curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/chaincodes/mycc \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d "{
-#   \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
-#   \"fcn\":\"removeTutorFromTutorial\",
-#   \"args\":[\"t1\",\"tu10\"]
-# }")
-# echo $VALUES
-# # Assign previous invoke transaction id  to TRX_ID
-# MESSAGE=$(echo $VALUES | jq -r ".message")
-# TRX_ID=${MESSAGE#*ID: }
-# echo
-
-
-# echo "GET query chaincode on peer1 of Org1"
-# echo
-# curl -s -X GET \
-#   "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22t1%22%5D" \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json"
-# echo
-# echo "====================================================================================="
-
-
-
-
-
-# echo "POST invoke chaincode on peers of Org1 and Org2 (Remov tutor from tutorial - error)"
-# echo
-# VALUES=$(curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/chaincodes/mycc \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d "{
-#   \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
-#   \"fcn\":\"removeTutorFromTutorial\",
-#   \"args\":[\"t1\",\"tu3\"]
-# }")
-# echo $VALUES
-# # Assign previous invoke transaction id  to TRX_ID
-# MESSAGE=$(echo $VALUES | jq -r ".message")
-# TRX_ID=${MESSAGE#*ID: }
-# echo
-
-
-# echo "GET query chaincode on peer1 of Org1"
-# echo
-# curl -s -X GET \
-#   "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22t1%22%5D" \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json"
-# echo
-# echo "====================================================================================="
-
-
-
-
-# echo "POST invoke chaincode on peers of Org1 and Org2 (Add new conference)"
-# echo
-# VALUES=$(curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/chaincodes/mycc \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d "{
-#   \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
-#   \"fcn\":\"addConference\",
-#   \"args\":[\"DSC 5.0\",\"Belgrade\",\"20.11.2019.\"]
-# }")
-# echo $VALUES
-# # Assign previous invoke transaction id  to TRX_ID
-# MESSAGE=$(echo $VALUES | jq -r ".message")
-# TRX_ID=${MESSAGE#*ID: }
-# echo
-
-
-# echo "GET query chaincode on peer1 of Org1"
-# echo
-# curl -s -X GET \
-#   "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22c1%22%5D" \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json"
-# echo
-# echo "====================================================================================="
-
+echo "GET query chaincode on peer1 of Org1 (Get bank bk1)"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22bk1%22%5D" \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo "====================================================================================="
