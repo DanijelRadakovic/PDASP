@@ -76,10 +76,23 @@ var getRegisteredUser = async function(username, userOrg, isJson) {
 			var admins = hfc.getConfigSetting('admins');
 			let adminUserObj = await client.setUserContext({username: admins[0].username, password: admins[0].secret});
 			let caClient = client.getCertificateAuthority();
+
+			let affiliationService = caClient.newAffiliationService();
+			  // Check if organization exists
+			let registeredAffiliations = await affiliationService.getAll(adminUserObj);
+			if (!registeredAffiliations.result.affiliations.some(x => x.name == userOrg.toLowerCase())) {
+				// Add affiliation
+				let affiliation = userOrg.toLowerCase() + '.department1';
+				await affiliationService.create({
+				  	name: affiliation,
+				  	force: true
+				}, adminUserObj);
+			}
 			let secret = await caClient.register({
 				enrollmentID: username,
 				affiliation: userOrg.toLowerCase() + '.department1'
 			}, adminUserObj);
+
 			logger.debug('Successfully got the secret for user %s',username);
 			user = await client.setUserContext({username:username, password:secret});
 			logger.debug('Successfully enrolled username %s  and setUserContext on the client object', username);

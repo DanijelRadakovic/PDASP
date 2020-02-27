@@ -55,10 +55,11 @@ const instantiateChaincode = async function(peers, channelName, chaincodeName, c
 			'endorsement-policy': {
 			        identities: [
 					{ role: { name: 'member', mspId: 'Org1MSP' }},
-					{ role: { name: 'member', mspId: 'Org2MSP' }}
+					{ role: { name: 'member', mspId: 'Org2MSP' }},
+					{ role: { name: 'member', mspId: 'Org3MSP' }}
 			        ],
 			        policy: {
-					'2-of':[{ 'signed-by': 0 }, { 'signed-by': 1 }]
+					'2-of':[{ 'signed-by': 0 }, { 'signed-by': 1 }, { 'signed-by': 2 }]
 			        }
 		        }
 		};
@@ -73,7 +74,7 @@ const instantiateChaincode = async function(peers, channelName, chaincodeName, c
 			logger.info('UPGRADE CALLED INSTEAD OF INSTANTIATE');
 		}
 		else	
-			results = await channel.sendInstantiateProposal(request, 60000); //instantiate takes much longer
+			results = await channel.sendInstantiateProposal(request, 120000); //instantiate takes much longer
 
 
 		// the returned object has both the endorsement results

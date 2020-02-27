@@ -2,3 +2,4 @@
 /package-lock.json
 /fabric-client-kv-org*
 .idea
+/bin
