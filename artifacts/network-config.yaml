@@ -69,10 +69,17 @@ channels:
         eventSource: true
 
       peer1.org1.example.com:
-        endorsingPeer: false
+        endorsingPeer: true
         chaincodeQuery: true
         ledgerQuery: true
         eventSource: false
+
+#      peer2.org1.example.com:
+#        endorsingPeer: true
+#        chaincodeQuery: true
+#        ledgerQuery: true
+#        eventSource: false
+
 
       peer0.org2.example.com:
         endorsingPeer: true
@@ -81,7 +88,7 @@ channels:
         eventSource: true
 
       peer1.org2.example.com:
-        endorsingPeer: false
+        endorsingPeer: true
         chaincodeQuery: true
         ledgerQuery: true
         eventSource: false
@@ -103,6 +110,7 @@ organizations:
     peers:
       - peer0.org1.example.com
       - peer1.org1.example.com
+#      - peer2.org1.example.com
 
     # [Optional]. Certificate Authorities issue certificates for identification purposes in a Fabric based
     # network. Typically certificates provisioning is done in a separate process outside of the
@@ -120,7 +128,7 @@ organizations:
     # this way. The SDK should allow applications to set the org admin identity via APIs, and only use
     # this route as an alternative when it exists.
     adminPrivateKey:
-      path: artifacts/channel/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/5890f0061619c06fb29dea8cb304edecc020fe63f41a6db109f1e227cc1cb2a8_sk
+      path: artifacts/channel/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/59e2793b9672fc45472468097a7c91838aa5ced95bd193d0c2492a77f634afd1_sk
     signedCert:
       path: artifacts/channel/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem
 
@@ -137,7 +145,7 @@ organizations:
     certificateAuthorities:
       - ca-org2
     adminPrivateKey:
-      path: artifacts/channel/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/1995b11d6573ed3be52fcd7a5fa477bc0f183e1f5f398c8281d0ce7c2c75a076_sk
+      path: artifacts/channel/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/5c002f5c9ab3989ff2dabc3348c1e1fd9b96308b59377276204afaa27c137c93_sk
     signedCert:
       path: artifacts/channel/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem
 
@@ -148,6 +156,7 @@ organizations:
 #
 orderers:
   orderer.example.com:
+    mspid: OrdererMSP
     url: grpcs://localhost:7050
 
     # these are standard properties defined by the gRPC library
@@ -157,6 +166,11 @@ orderers:
 
     tlsCACerts:
       path: artifacts/channel/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/ca.crt
+
+    adminPrivateKey:
+      path: artifacts/channel/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/5c002f5c9ab3989ff2dabc3348c1e1fd9b96308b59377276204afaa27c137c93_sk
+    signedCert:
+        path: artifacts/channel/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem
 
 #
 # List of peers to send various requests to, including endorsement, query
@@ -178,6 +192,13 @@ peers:
       ssl-target-name-override: peer1.org1.example.com
     tlsCACerts:
       path: artifacts/channel/crypto-config/peerOrganizations/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt
+
+#  peer2.org1.example.com:
+#    url: grpcs://localhost:7061
+#    grpcOptions:
+#      ssl-target-name-override: peer2.org1.example.com
+#    tlsCACerts:
+#      path: artifacts/channel/crypto-config/peerOrganizations/org1.example.com/peers/peer2.org1.example.com/tls/ca.crt
 
   peer0.org2.example.com:
     url: grpcs://localhost:8051

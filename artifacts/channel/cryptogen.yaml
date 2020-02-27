@@ -12,7 +12,8 @@ OrdererOrgs:
   # ---------------------------------------------------------------------------
   - Name: Orderer
     Domain: example.com
-
+    CA:
+      OrganizationalUnit: admin
     # ---------------------------------------------------------------------------
     # "Specs" - See PeerOrgs below for complete description
     # ---------------------------------------------------------------------------
@@ -28,6 +29,7 @@ PeerOrgs:
   # ---------------------------------------------------------------------------
   - Name: Org1
     Domain: org1.example.com
+    EnableNodeOUs: true
 
     # ---------------------------------------------------------------------------
     # "CA"
@@ -35,8 +37,8 @@ PeerOrgs:
     # Uncomment this section to enable the explicit definition of the CA for this
     # organization.  This entry is a Spec.  See "Specs" section below for details.
     # ---------------------------------------------------------------------------
-    CA:
-       Hostname: ca # implicitly ca.org1.example.com
+#    CA:
+#       Hostname: ca # implicitly ca.org1.example.com
 
     # ---------------------------------------------------------------------------
     # "Specs"
@@ -86,8 +88,8 @@ PeerOrgs:
       Count: 2
       # Start: 5
       # Hostname: {{.Prefix}}{{.Index}} # default
-      SANS:
-        - "localhost"
+#      SANS:
+#        - "localhost"
 
     # ---------------------------------------------------------------------------
     # "Users"
@@ -102,12 +104,13 @@ PeerOrgs:
   # ---------------------------------------------------------------------------
   - Name: Org2
     Domain: org2.example.com
-    CA:
-       Hostname: ca # implicitly ca.org1.example.com
+    EnableNodeOUs: true
+#    CA:
+#       Hostname: ca # implicitly ca.org2.example.com
 
     Template:
       Count: 2
-      SANS:
-        - "localhost"
+#      SANS:
+#        - "localhost"
     Users:
       Count: 1
